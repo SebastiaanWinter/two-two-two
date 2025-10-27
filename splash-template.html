@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #FFF6F1, #FDEEE8);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1C2A33;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 80%;
+        }
+        .app-icon {
+            width: min(180px, 30vh);
+            height: min(180px, 30vh);
+            margin-bottom: min(24px, 4vh);
+            object-fit: contain;
+        }
+        h1 {
+            font-size: min(32px, 5vh);
+            font-weight: 800;
+            margin: 0 0 min(8px, 1.5vh) 0;
+            line-height: 1.2;
+        }
+        p {
+            font-size: min(18px, 3vh);
+            color: #6A7A86;
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        /* Favicon template */
+        .favicon-template {
+            display: none; /* Hidden by default */
+        }
+        .favicon-template.show {
+            display: block;
+            width: 32px;
+            height: 32px;
+            background: #F4846C;
+            border-radius: 6px;
+            color: white;
+            font-weight: 800;
+            font-size: 14px;
+            line-height: 32px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen Template -->
+    <div class="container splash-screen">
+        <img src="icon-192.png" class="app-icon" alt="2-2-2">
+        <h1>2-2-2 Morning Routine</h1>
+        <p>Start your day with Energy & Intention</p>
+    </div>
+
+    <!-- Favicon Template -->
+    <div class="favicon-template">
+        222
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions" style="position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; font-size: 14px; max-width: 600px;">
+        <p style="color: white; margin-bottom: 10px;">To create splash screens:</p>
+        <ol style="margin: 0; padding-left: 20px;">
+            <li>Set viewport size to the target dimensions (e.g., 1290x2796 for iPhone 17 Pro)</li>
+            <li>Hide these instructions (add ?hide-instructions to URL)</li>
+            <li>Take a screenshot</li>
+            <li>Save as splash-[width]x[height].png</li>
+        </ol>
+        <p style="color: white; margin-top: 10px;">For favicon:</p>
+        <ol style="margin: 0; padding-left: 20px;">
+            <li>Add ?show-favicon to URL</li>
+            <li>Take a 32x32 screenshot</li>
+            <li>Save as favicon.ico</li>
+        </ol>
+    </div>
+
+    <script>
+        // Handle URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('hide-instructions')) {
+            document.querySelector('.instructions').style.display = 'none';
+        }
+        if (urlParams.has('show-favicon')) {
+            document.querySelector('.splash-screen').style.display = 'none';
+            document.querySelector('.favicon-template').classList.add('show');
+        }
+    </script>
+</body>
+</html>
