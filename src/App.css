@@ -1,0 +1,19 @@
+/* Header */
+.app-header { padding-top: 24px; padding-bottom: 8px; }
+.app-title { font-size: 2rem; font-weight: 800; }
+.app-sub { color: var(--sub); font-size: .95rem; }
+
+/* Streak rij */
+.streak { color: var(--accent); }
+
+/* Timer wrapper */
+.timer { display:flex; flex-direction:column; align-items:center; justify-content:center; padding-block: 16px; }
+.timer svg { display:block; }
+
+/* Statement knoppen */
+.statement { display:block; width:100%; max-width: 420px; margin: 0 auto .5rem; padding: .8rem 1rem; border:1px solid var(--card-br); border-radius: 16px; background:#F8FAFC; color:var(--text); text-align:left; }
+.statement--active { background: linear-gradient(90deg, var(--accent), var(--accent-2)); color:#fff; border-color: var(--accent); }
+
+/* Future-cast blok */
+.fc-box { max-width: 420px; margin-inline:auto; background:#FFF9F5; border:1px solid var(--card-br); border-radius:16px; padding:1rem; color:var(--text); }
+.fc-hint { color:var(--sub); }
