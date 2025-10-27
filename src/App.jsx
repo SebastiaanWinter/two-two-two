@@ -493,7 +493,7 @@ Can you see yourself? Can you feel that feeling?`
         {/* FINAL screen (tab 3 or auto after future) */}
         {tab===DEV_DONE_TAB_INDEX && (
           <div style={{marginTop:12, padding:18, border:`1px solid ${BRAND.border}`, borderRadius:18, background:"#fff", boxShadow:BRAND.shadowLg}}>
-            <img src="/Alleah-500.png" alt="Alleah" style={{width:200, height:200, objectFit:"cover", borderRadius:"36%", transform:"rotate(-6deg)", boxShadow:"0 8px 24px rgba(0,0,0,.08)"}} />
+            <img src={import.meta.env.BASE_URL + "Alleah-500.png"} alt="Alleah" style={{width:200, height:200, objectFit:"cover", borderRadius:"36%", transform:"rotate(-6deg)", boxShadow:"0 8px 24px rgba(0,0,0,.08)"}} />
             <h2 style={{marginTop:10, fontSize:"1.4rem", fontWeight:800, color:BRAND.text}}>Great job! ✨</h2>
             <p style={{color:BRAND.sub, marginBottom:12}}>You completed your 2-2-2 today. See you tomorrow.</p>
 
