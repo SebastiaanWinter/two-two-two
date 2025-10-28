@@ -1,15 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Play, Pause, RotateCcw, Edit2, Save, X, Plus, Trash2,
-  Wind, Star, Sparkles, CheckCircle2, Calendar, ExternalLink, Info,
+  Wind, Star, Sparkles, Calendar, ExternalLink, Info,
   Volume2, VolumeX
 } from "lucide-react";
 import InstallBanner from "./components/InstallBanner.jsx";
 
-/* ========= Brand (sampled from site look) =========
-   Subtle cream bg + coral accents + deep slate text
-   If you want to tweak exact hex later, change here.
-   ------------------------------------------------- */
+/* ========= Brand ========= */
 const BRAND = {
   bgFrom: "#FFF6F1",
   bgTo:   "#FDEEE8",
@@ -28,8 +25,8 @@ const BRAND = {
   shadowMd: "0 12px 24px rgba(245,128,99,.12)",
 };
 
-const STEPS = ["Breathing", "Power", "Future"]; // tabs 0..2
-const DEV_DONE_TAB_INDEX = 3; // "4" tab shows final screen
+const STEPS = ["Breathing", "Power", "Future"];
+const DEV_DONE_TAB_INDEX = 3;
 
 /* ===== Helpers ===== */
 const ymd = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -44,7 +41,7 @@ const K = {
   streak:         "flow222_streak",
   lastDone:       "flow222_last_done",
   reminderTime:   "flow222_rem_time",
-  weeklySkipUsed: "flow222_skip_week", // stores week key when skip used
+  weeklySkipUsed: "flow222_skip_week",
   soundEnabled:   "flow222_sound_enabled",
 };
 
@@ -68,6 +65,21 @@ const DEFAULT_STATEMENTS = [
   "Fear is data, not a decision.",
 ];
 
+const FUTURECAST_TEMPLATE = `Futurecasting 😎
+
+Your yummy vision: 4–6 bullet points
+How would that FEEL?
+How would you drink your coffee/tea/water in the morning? ;)
+How would it feel at dinner?
+How would that feel walking down the street/trail/to your car?
+Flex Abundance — specifically about Money
+Vision + feeling of you when getting it
+I did it! I did it! I did it!
+How would you stand on your deck?
+How does $100M feel?
+How does fame/recognition/more than enough feel?
+Can you see yourself? Can you feel that feeling?`;
+
 const QUOTES = [
   { text: "Conscious breathing is my anchor.", author: "Thich Nhat Hanh" },
   { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
@@ -80,7 +92,7 @@ const QUOTES = [
 
 export default function App() {
   /* --- step & timer --- */
-  const [tab, setTab] = useState(0);          // 0..2, 3=final screen (dev tab "4")
+  const [tab, setTab] = useState(0);
   const [timeLeft, setTimeLeft] = useState(120);
   const [running, setRunning] = useState(false);
   const tRef = useRef(null);
@@ -101,14 +113,19 @@ export default function App() {
 
   /* --- statements --- */
   const [statements, setStatements] = useState(() => {
-    try { const s = JSON.parse(localStorage.getItem(K.statementsList) || "[]"); return s.length?s:DEFAULT_STATEMENTS; }
-    catch { return DEFAULT_STATEMENTS; }
+    try {
+      const saved = JSON.parse(localStorage.getItem(K.statementsList) || "[]");
+      if (Array.isArray(saved) && saved.length) return saved;
+    } catch {}
+    // seed with ONLY the first 8 on first run
+    return DEFAULT_STATEMENTS.slice(0, 8);
   });
   const [selected, setSelected] = useState(() => {
     try { const s = JSON.parse(localStorage.getItem(K.selectedToday) || "[]"); return Array.isArray(s)?s:[]; }
     catch { return []; }
   });
   const [editStatements, setEditStatements] = useState(false);
+  const [tempStatements, setTempStatements] = useState([]); // <- edit buffer
   const [newLine, setNewLine] = useState("");
 
   /* --- future-cast --- */
@@ -139,13 +156,8 @@ export default function App() {
         o.start(now); o.stop(now+1.25);
       } catch {}
     }
-    
     // Gentle vibration (if supported)
-    try {
-      if ("vibrate" in navigator) {
-        navigator.vibrate([100, 30, 100]); // gentle pulse pattern
-      }
-    } catch {}
+    try { if ("vibrate" in navigator) navigator.vibrate([100, 30, 100]); } catch {}
   };
 
   /* --- timer loop --- */
@@ -157,22 +169,15 @@ export default function App() {
           clearInterval(tRef.current);
           setRunning(false);
           setTimeLeft(0);
-          // mark done
           if (tab === 0) setDone0(true);
           if (tab === 1) setDone1(true);
           if (tab === 2) setDone2(true);
           notifyComplete();
 
-          // open next step prompt
           const nextMap = { 0: "Power Statements", 1: "Future-Casting", 2: "Wrap-up" };
           const toTab = tab < 2 ? tab + 1 : DEV_DONE_TAB_INDEX;
-          setNextPrompt({
-            title: `Ready for your ${nextMap[tab]}?`,
-            cta: "Let’s do it",
-            toTab
-          });
+          setNextPrompt({ title: `Ready for your ${nextMap[tab]}?`, cta: "Let’s do it", toTab });
 
-          // auto-move after 10s if user does nothing
           const t = setTimeout(() => {
             setTab(toTab);
             setTimeLeft(120);
@@ -217,58 +222,57 @@ export default function App() {
   /* --- weekly skip handling --- */
   const canUseWeeklySkip = () => {
     const wk = getWeekKey();
-    return skipWeek !== wk; // not used yet this week
+    return skipWeek !== wk;
   };
   const useWeeklySkip = () => {
     if (!canUseWeeklySkip()) return;
     const today = ymd();
     if (lastDone !== today) {
       const yest = ymd(new Date(Date.now()-86400000));
-      setStreak(lastDone === yest ? streak + 1 : Math.max(1, streak)); // keep or set to 1
+      setStreak(lastDone === yest ? streak + 1 : Math.max(1, streak));
       setLastDone(today);
     }
     setSkipWeek(getWeekKey());
   };
 
-  /* --- ring visuals --- */
-  const R=94, CIRC=2*Math.PI*R, total=120;
-  const dash = CIRC * (1 - (total-timeLeft)/total);
+  /* --- visuals / misc --- */
   const quote = useMemo(() => QUOTES[Math.floor(Math.random()*QUOTES.length)], [tab===DEV_DONE_TAB_INDEX]);
 
-  /* --- tab click (dev) --- */
-  const goTab = (i) => {
-    setTab(i);
-    if (i <= 2) resetTimer(120);
-  };
+  /* --- tab click --- */
+  const goTab = (i) => { setTab(i); if (i <= 2) resetTimer(120); };
 
-  /* --- statements editing (does NOT affect auto-advance) --- */
+  /* --- statements selection --- */
   const toggleSelect = (line) =>
     setSelected((prev) => prev.includes(line) ? prev.filter(l=>l!==line) : [...prev, line]);
-  const updateLine = (i,val) => setStatements(list => list.map((v,idx)=> idx===i?val:v));
-  const removeLine = (i) => setStatements(list => list.filter((_,idx)=> idx!==i));
-  const addLine = () => { const s=newLine.trim(); if(!s) return; setStatements(l=>[...l,s]); setNewLine(""); };
 
-  /* --- future cast edit (does NOT affect auto-advance) --- */
+  /* --- statements editor open/save (uses temp buffer) --- */
+  const openStatementsEditor = () => {
+    setTempStatements(statements);
+    setNewLine("");
+    setEditStatements(true);
+  };
+  const persistStatements = () => {
+    setStatements(tempStatements);
+    setEditStatements(false);
+  };
+  const updateLine = (i,val) =>
+    setTempStatements(list => list.map((v,idx)=> idx===i ? val : v));
+  const removeLine = (i) =>
+    setTempStatements(list => list.filter((_,idx)=> idx!==i));
+  const addLine = () => {
+    const s = newLine.trim();
+    if (!s) return;
+    setTempStatements(l => [...l, s]);
+    setNewLine("");
+  };
+
+  /* --- future cast editor (tips only the first time) --- */
   const openFC = () => {
-    setDraftFC(
-`Futurecasting 😎
-
-Your yummy vision: 4-6 bullet points 
-How would that FEEL 
-How would you drink your coffee/tea/water in the morning ;)
-How would it feel at dinner?
-How would that feel walking down the street/trail/to your car? 
-Flex Abundance - Specifically on Money
-Vision and feeling of how you would be when getting it 
-I did it! I did it! I did it! 
-How would you stand on your deck?
-How does $100M feel? 
-How does fame/recognition/more than enough feel? 
-Can you see yourself? Can you feel that feeling?`
-    );
+    const existing = (futureCast || "").trim();
+    setDraftFC(existing || FUTURECAST_TEMPLATE); // <- tips only if empty
     setEditFC(true);
   };
-  const saveFC = () => { setFutureCast(draftFC); setEditFC(false); };
+  const saveFC = () => { setFutureCast(draftFC.trim()); setEditFC(false); };
 
   /* --- reminder .ics --- */
   const downloadICS = () => {
@@ -288,7 +292,6 @@ Can you see yourself? Can you feel that feeling?`
     URL.revokeObjectURL(url);
   };
 
-  /* --- handle prompt CTA --- */
   const proceedFromPrompt = () => {
     if (!nextPrompt) return;
     if (autoNextTimer) clearTimeout(autoNextTimer);
@@ -307,8 +310,7 @@ Can you see yourself? Can you feel that feeling?`
           <p style={{marginTop:4, color:BRAND.sub}}>with Energy & Intention</p>
 
           <div style={{marginTop:8, color:BRAND.coral, fontWeight:700}}>
-            🔥 {streak} day streak
-            {" "}
+            🔥 {streak} day streak{" "}
             {canUseWeeklySkip() && (
               <button onClick={useWeeklySkip}
                 title="Use weekly skip"
@@ -318,7 +320,7 @@ Can you see yourself? Can you feel that feeling?`
             )}
           </div>
 
-          {/* Tabs (clickable) */}
+          {/* Tabs */}
           <nav style={{display:"flex", justifyContent:"center", gap:24, marginTop:14, borderTop:`1px solid #F3E6DF`}}>
             <Tab label="Breathing" icon={<Wind/>} active={tab===0} onClick={()=>goTab(0)} />
             <Tab label="Power"     icon={<Star/>} active={tab===1} onClick={()=>goTab(1)} />
@@ -349,78 +351,52 @@ Can you see yourself? Can you feel that feeling?`
             }}>
               <div style={{display:"flex", flexDirection:"column", gap:6}}>
                 <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  background: "#fff",
-                  padding: "12px 16px",
-                  borderRadius: 12,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+                  display: "flex", alignItems: "center", gap: 12, background: "#fff",
+                  padding: "12px 16px", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
                 }}>
-                  <div style={{
-                    fontSize: "28px",
-                    fontWeight: "800",
-                    color: BRAND.text,
-                    minWidth: "80px"
-                  }}>
+                  <div style={{fontSize: "28px", fontWeight: "800", color: BRAND.text, minWidth: "80px"}}>
                     {toMMSS(timeLeft)}
                   </div>
-                  
-                  <div style={{
-                    flex: 1,
-                    height: "8px",
-                    background: BRAND.ringBase,
-                    borderRadius: "4px",
-                    overflow: "hidden"
-                  }}>
+                  <div style={{flex: 1, height: "8px", background: BRAND.ringBase, borderRadius: "4px", overflow: "hidden"}}>
                     <div style={{
-                      height: "100%",
-                      width: `${(timeLeft/120) * 100}%`,
-                      background: BRAND.ringFill,
-                      transition: "width 1s linear",
+                      height: "100%", width: `${(timeLeft/120) * 100}%`,
+                      background: BRAND.ringFill, transition: "width 1s linear",
                       boxShadow: running ? "0 0 10px rgba(245,128,99,.35)" : "none"
-                    }} />
+                    }}/>
                   </div>
                 </div>
 
                 <div style={{display:"flex", gap:6, width:"100%", justifyContent:"center", alignItems:"center"}}>
-                    <button onClick={()=>setRunning(r=>!r)}
-                            style={{
-                              display:"inline-flex", alignItems:"center", justifyContent:"center",
-                              border:"none", borderRadius:10, padding:"10px 14px", color:"#fff",
-                              background:BRAND.coral, boxShadow:BRAND.shadowMd, fontWeight:800,
-                              flex: "1",
-                              maxWidth: "120px"
-                            }}>
-                      {running ? <Pause className="w-4 h-4"/> : <Play className="w-4 h-4" />}
-                      {running ? "Pause" : "Start"}
-                    </button>
+                  <button onClick={()=>setRunning(r=>!r)}
+                          style={{
+                            display:"inline-flex", alignItems:"center", justifyContent:"center",
+                            border:"none", borderRadius:10, padding:"10px 14px", color:"#fff",
+                            background:BRAND.coral, boxShadow:BRAND.shadowMd, fontWeight:800, flex:"1", maxWidth:"120px"
+                          }}>
+                    {running ? <Pause className="w-4 h-4"/> : <Play className="w-4 h-4" />}
+                    {running ? "Pause" : "Start"}
+                  </button>
 
-                    <button onClick={()=>resetTimer(120)}
-                            style={{
-                              display:"inline-flex", alignItems:"center", justifyContent:"center",
-                              border:"1px solid " + BRAND.border,
-                              borderRadius:10, padding:"10px 14px",
-                              background:"#fff",
-                              color:BRAND.sub,
-                              fontWeight:600,
-                              minWidth: "90px"
-                            }}>
-                      <RotateCcw className="w-4 h-4" /> Reset
-                    </button>
+                  <button onClick={()=>resetTimer(120)}
+                          style={{
+                            display:"inline-flex", alignItems:"center", justifyContent:"center",
+                            border:"1px solid " + BRAND.border, borderRadius:10, padding:"10px 14px",
+                            background:"#fff", color:BRAND.sub, fontWeight:600, minWidth:"90px"
+                          }}>
+                    <RotateCcw className="w-4 h-4" /> Reset
+                  </button>
 
-                    <button onClick={() => setSoundEnabled(!soundEnabled)}
-                            style={{
-                              display:"inline-flex", alignItems:"center", justifyContent:"center",
-                              border:"1px solid " + BRAND.border,
-                              borderRadius:10, padding:"10px",
-                              background: soundEnabled ? "#fff" : BRAND.pill,
-                              color: soundEnabled ? BRAND.sub : BRAND.coral,
-                              width: "42px", height: "42px"
-                            }}
-                            title={soundEnabled ? "Mute sound" : "Unmute sound"}>
-                      {soundEnabled ? <Volume2 className="w-4 h-4"/> : <VolumeX className="w-4 h-4"/>}
-                    </button>
+                  <button onClick={() => setSoundEnabled(!soundEnabled)}
+                          style={{
+                            display:"inline-flex", alignItems:"center", justifyContent:"center",
+                            border:"1px solid " + BRAND.border, borderRadius:10, padding:"10px",
+                            background: soundEnabled ? "#fff" : BRAND.pill,
+                            color: soundEnabled ? BRAND.sub : BRAND.coral,
+                            width:"42px", height:"42px"
+                          }}
+                          title={soundEnabled ? "Mute sound" : "Unmute sound"}>
+                    {soundEnabled ? <Volume2 className="w-4 h-4"/> : <VolumeX className="w-4 h-4"/>}
+                  </button>
                 </div>
               </div>
             </div>
@@ -460,7 +436,7 @@ Can you see yourself? Can you feel that feeling?`
                     </button>
                   );
                 })}
-                <button onClick={()=>setEditStatements(true)}
+                <button onClick={openStatementsEditor}
                         style={{marginTop:10, display:"inline-flex", alignItems:"center", gap:8,
                                 border:"none", borderRadius:12, padding:"12px 14px", background:BRAND.coral, color:"#fff", fontWeight:700}}>
                   <Plus className="w-4 h-4" /> Add / Edit Statements
@@ -490,10 +466,11 @@ Can you see yourself? Can you feel that feeling?`
           </>
         )}
 
-        {/* FINAL screen (tab 3 or auto after future) */}
+        {/* FINAL screen */}
         {tab===DEV_DONE_TAB_INDEX && (
           <div style={{marginTop:12, padding:18, border:`1px solid ${BRAND.border}`, borderRadius:18, background:"#fff", boxShadow:BRAND.shadowLg}}>
-            <img src={import.meta.env.BASE_URL + "Alleah-500.png"} alt="Alleah" style={{width:200, height:200, objectFit:"cover", borderRadius:"36%", transform:"rotate(-6deg)", boxShadow:"0 8px 24px rgba(0,0,0,.08)"}} />
+            <img src={import.meta.env.BASE_URL + "Alleah-500.png"} alt="Alleah"
+                 style={{width:200, height:200, objectFit:"cover", borderRadius:"36%", transform:"rotate(-6deg)", boxShadow:"0 8px 24px rgba(0,0,0,.08)"}} />
             <h2 style={{marginTop:10, fontSize:"1.4rem", fontWeight:800, color:BRAND.text}}>Great job! ✨</h2>
             <p style={{color:BRAND.sub, marginBottom:12}}>You completed your 2-2-2 today. See you tomorrow.</p>
 
@@ -528,32 +505,42 @@ Can you see yourself? Can you feel that feeling?`
         </Modal>
       )}
 
-      {/* Statements editor */}
+      {/* Statements editor (scrollable + sticky footer) */}
       {editStatements && (
         <Modal title="Customize power statements" onClose={()=>setEditStatements(false)}>
-          <div className="space-y-3">
-            {statements.map((line,i)=>(
-              <div key={i} style={{display:"flex", gap:8, margin:"8px 0"}}>
-                <input value={line} onChange={e=>updateLine(i,e.target.value)}
-                       style={{flex:1, padding:"10px 12px", border:`1px solid ${BRAND.border}`, borderRadius:12}} />
-                <button onClick={()=>removeLine(i)} className="btn"><Trash2 className="w-4 h-4"/></button>
-              </div>
-            ))}
-            <div style={{display:"flex", gap:8, marginTop:8}}>
-              <input value={newLine} onChange={e=>setNewLine(e.target.value)} placeholder="Add new statement…"
-                     style={{flex:1, padding:"10px 12px", border:`1px solid ${BRAND.border}`, borderRadius:12}} />
-              <button onClick={addLine} style={{border:"none", borderRadius:12, padding:"10px 12px", background:BRAND.coral, color:"#fff", fontWeight:700}}>
-                <Plus className="w-4 h-4" />
+          <div className="editor-card">
+            <div className="editor-scroll">
+              {tempStatements.map((line,i)=>(
+                <div key={i} className="statement-row">
+                  <textarea
+                    value={line}
+                    onChange={e=>updateLine(i,e.target.value)}
+                    placeholder="Type your statement…"
+                  />
+                  <button onClick={()=>removeLine(i)} className="delete-btn">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              <button onClick={()=>setTempStatements([...tempStatements, ""])} className="add-btn">
+                + Add new statement
               </button>
+
+              <div className="add-inline">
+                <input value={newLine} onChange={e=>setNewLine(e.target.value)} placeholder="Quick add…" />
+                <button onClick={addLine} className="primary">Add</button>
+              </div>
             </div>
-            <div style={{display:"flex", justifyContent:"flex-end", marginTop:10}}>
-              <button onClick={()=>setEditStatements(false)} className="btn">Done</button>
+
+            <div className="editor-footer">
+              <button onClick={()=>setEditStatements(false)} className="secondary">Cancel</button>
+              <button onClick={persistStatements} className="primary">Save</button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* Futurecast editor */}
+      {/* Futurecast editor (template only first time) */}
       {editFC && (
         <Modal title="Edit your future-cast" onClose={()=>setEditFC(false)}>
           <textarea value={draftFC} onChange={(e)=>setDraftFC(e.target.value)}
@@ -564,9 +551,6 @@ Can you see yourself? Can you feel that feeling?`
                     style={{border:"none", borderRadius:9999, padding:"10px 16px", background:"#6F63F6", color:"#fff", fontWeight:800}}>
               <Save className="w-4 h-4" /> Save
             </button>
-          </div>
-          <div style={{marginTop:10, color:BRAND.sub, fontSize:14}}>
-            <strong>Tips:</strong> write in present tense, feel it in your body, include money & relationships, and finish with “I did it! I did it! I did it!”.
           </div>
         </Modal>
       )}
@@ -592,7 +576,7 @@ Can you see yourself? Can you feel that feeling?`
   );
 }
 
-/* ============== Small presentational bits ============== */
+/* ============== Presentational bits ============== */
 function Tab({label, icon, active, onClick}) {
   return (
     <button onClick={onClick}
@@ -628,7 +612,7 @@ function LinkCard({title, href}) {
 function Modal({title, children, onClose}) {
   return (
     <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,.4)", display:"flex", alignItems:"center", justifyContent:"center", padding:12, zIndex:50}}>
-      <div style={{width:"100%", maxWidth:358, background:"#fff", borderRadius:20, boxShadow:"0 18px 60px rgba(0,0,0,.2)", padding:16}}>
+      <div style={{width:"100%", maxWidth:358, background:"#fff", borderRadius:20, boxShadow:"0 18px 60px rgba(0,0,0,.2)", padding:16, maxHeight:"90vh", overflow:"auto"}}>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10}}>
           <h3 style={{fontSize:"1.1rem", fontWeight:800, color:BRAND.text}}>{title}</h3>
           <button onClick={onClose} className="btn"><X className="w-4 h-4" /></button>
