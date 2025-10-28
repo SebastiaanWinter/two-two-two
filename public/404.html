@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Redirecting…</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    // Als we NIET binnen /two-two-two/ zitten, stuur door naar de app
+    if (!location.pathname.startsWith('/two-two-two/')) {
+      location.replace('/two-two-two/' + location.search + location.hash);
+    }
+  </script>
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=/two-two-two/" />
+  </noscript>
+</head>
+<body>Redirecting…</body>
+</html>
