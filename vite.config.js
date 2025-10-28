@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 const base = '/two-two-two/' // 👈 very important
 
 export default defineConfig({
-  base,
+  base: '/two-two-two/',
   plugins: [
     react(),
     VitePWA({
