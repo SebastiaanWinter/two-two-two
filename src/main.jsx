@@ -6,25 +6,22 @@ import "./index.css";
 // PWA registration (vite-plugin-pwa)
 import { registerSW } from "virtual:pwa-register";
 
-// Registreer de service worker
-registerSW({
-  // Toon een confirm als er een nieuwe versie klaarstaat
+// Register service worker with update handling
+const updateSW = registerSW({
   onNeedRefresh() {
     if (confirm("A new version is ready. Refresh now?")) {
-      window.location.reload();
+      updateSW(); // Call the updater function to activate new service worker
     }
   },
-  // Log wanneer de app offline-ready is
   onOfflineReady() {
     console.log("App is ready to work offline");
-  },
-  // immediate: true // (optioneel) SW meteen activeren zonder wachtfase
+  }
 });
 
-// Render de app
+// Render the app
 createRoot(document.getElementById("root")).render(
-  // Tip: StrictMode kan in development sommige useEffects dubbel laten lopen.
-  // Laat 'm uit tijdens bouwen met timers/audio om rare effecten te voorkomen.
+  // StrictMode can cause useEffects to run twice in development.
+  // Keep it disabled while building with timers/audio to prevent odd behavior.
   // <React.StrictMode>
     <App />
   // </React.StrictMode>
