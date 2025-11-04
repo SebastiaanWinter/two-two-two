@@ -252,9 +252,14 @@ export default function App() {
     setEditStatements(true);
   };
   const persistStatements = () => {
-    setStatements(tempStatements);
-    setEditStatements(false);
-  };
+  // trim alle regels en gooi lege weg
+  const cleaned = tempStatements
+    .map((s) => (s || "").trim())
+    .filter((s) => s.length > 0);
+
+  setStatements(cleaned);
+  setEditStatements(false);
+};
   const updateLine = (i,val) =>
     setTempStatements(list => list.map((v,idx)=> idx===i ? val : v));
   const removeLine = (i) =>
@@ -419,30 +424,71 @@ export default function App() {
               </>
             )}
 
-            {tab===1 && (
-              <div style={{marginTop:16, padding:18, border:`1px solid ${BRAND.border}`, borderRadius:18, background:"#FFF7E5"}}>
-                <h4 style={{textAlign:"left", margin:"0 0 10px", color:BRAND.text}}>Your Power Statements</h4>
-                {statements.map((line, i) => {
-                  const active = selected.includes(line);
-                  return (
-                    <button key={i} onClick={()=>toggleSelect(line)}
-                      style={{
-                        display:"block", width:"100%", textAlign:"left",
-                        background:"#fff", border:`1px solid ${active? BRAND.coral : BRAND.border}`,
-                        color: active? BRAND.coral : BRAND.text,
-                        borderRadius:12, padding:"12px 14px", margin:"8px 0"
-                      }}>
-                      {line}
-                    </button>
-                  );
-                })}
-                <button onClick={openStatementsEditor}
-                        style={{marginTop:10, display:"inline-flex", alignItems:"center", gap:8,
-                                border:"none", borderRadius:12, padding:"12px 14px", background:BRAND.coral, color:"#fff", fontWeight:700}}>
-                  <Plus className="w-4 h-4" /> Add / Edit Statements
-                </button>
-              </div>
-            )}
+      {tab === 1 && (
+  <div
+    style={{
+      marginTop: 16,
+      padding: 18,
+      border: `1px solid ${BRAND.border}`,
+      borderRadius: 18,
+      background: "#FFF7E5",
+    }}
+  >
+    <h4
+      style={{
+        textAlign: "left",
+        margin: "0 0 10px",
+        color: BRAND.text,
+      }}
+    >
+      Your Power Statements
+    </h4>
+
+    {statements
+      .filter((line) => (line || "").trim().length > 0) // alleen niet-lege regels
+      .map((line, i) => {
+        const active = selected.includes(line);
+        return (
+          <button
+            key={i}
+            onClick={() => toggleSelect(line)}
+            style={{
+              display: "block",
+              width: "100%",
+              textAlign: "left",
+              background: "#fff",
+              border: `1px solid ${active ? BRAND.coral : BRAND.border}`,
+              color: active ? BRAND.coral : BRAND.text,
+              borderRadius: 12,
+              padding: "12px 14px",
+              margin: "8px 0",
+            }}
+          >
+            {line}
+          </button>
+        );
+      })}
+
+    <button
+      onClick={openStatementsEditor}
+      style={{
+        marginTop: 10,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        border: "none",
+        borderRadius: 12,
+        padding: "12px 14px",
+        background: BRAND.coral,
+        color: "#fff",
+        fontWeight: 700,
+      }}
+    >
+      <Plus className="w-4 h-4" /> Add / Edit Statements
+    </button>
+  </div>
+)}
+
 
             {tab===2 && (
               <div style={{marginTop:16, padding:18, border:`1px solid ${BRAND.border}`, borderRadius:18, background:"#F8F2FF"}}>
