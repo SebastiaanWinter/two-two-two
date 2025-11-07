@@ -88,36 +88,37 @@ const DEFAULT_STATEMENTS = [
   "Fear is data, not a decision.",
 ];
 
+/* ===== LOA-style default rewrites ===== */
 const DEFAULT_REWRITES = [
   {
     id: 1,
     current: "I never have enough time.",
-    r1: "I'm learning to prioritise what truly matters.",
-    r2: "There is enough time for the things that are aligned with me.",
+    r1: "I’m allowed to move slower and still be wildly supported.",
+    r2: "Time expands for me when I focus on what really matters.",
   },
   {
     id: 2,
     current: "Money is always stressful for me.",
-    r1: "I'm getting better at managing and welcoming money.",
-    r2: "Money can be a calm, supportive partner in my life.",
+    r1: "I’m learning to feel safe with money and receiving more.",
+    r2: "Money is simply energy that loves clear, calm direction from me.",
   },
   {
     id: 3,
-    current: "I'm not consistent enough to succeed.",
-    r1: "I'm discovering my own natural rhythm of consistency.",
-    r2: "Small, gentle steps still count and add up for me.",
+    current: "I’m not consistent enough to succeed.",
+    r1: "My gentle, aligned actions are more than enough to build momentum.",
+    r2: "Every tiny step I take is proof that I’m showing up for this new reality.",
   },
   {
     id: 4,
     current: "Other people are further ahead than I am.",
-    r1: "I'm on my own unique, perfectly-timed path.",
-    r2: "I can celebrate others and still trust my timing.",
+    r1: "My path has its own timing, and it’s working in my favor.",
+    r2: "I can celebrate others and still trust that my quantum leaps are on their way.",
   },
   {
     id: 5,
     current: "I’m afraid I’ll mess things up.",
-    r1: "I'm allowed to learn as I go.",
-    r2: "Every experience gives me more wisdom and clarity.",
+    r1: "I’m allowed to learn in public and still be deeply worthy.",
+    r2: "I can’t get this ‘wrong’ — every experience reshapes me into the person I’m becoming.",
   },
 ];
 
@@ -621,7 +622,7 @@ export default function App() {
                 "Center yourself with mindful breathing. Inhale peace, exhale tension."}
               {tab === 1 && "Affirm your strength and potential."}
               {tab === 2 &&
-                "Take old stories and lovingly rewrite them into something that serves you."}
+                "Gently shift old stories into thoughts that match your new reality."}
               {tab === 3 && "Visualize and manifest your dreams."}
             </p>
 
@@ -950,8 +951,9 @@ export default function App() {
                       color: BRAND.sub,
                     }}
                   >
-                    (Tap “Add / Edit Rewrites” to capture old stories and
-                    rewrite them into something that serves you.)
+                    (Tap “Add / Edit Rewrites” to capture an old story and
+                    gently upgrade it into something that matches your new
+                    vibration.)
                   </div>
                 )}
 
@@ -1020,7 +1022,8 @@ export default function App() {
                     }}
                   >
                     (Tap “Edit Vision” to write your first Futurecast. Tip
-                    prompts will appear.)
+                    prompts will appear to help you drop into the feeling of
+                    your new reality.)
                   </div>
                 )}
                 <button
