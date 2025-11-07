@@ -6,16 +6,29 @@ import "./index.css";
 // PWA registration (vite-plugin-pwa)
 import { registerSW } from "virtual:pwa-register";
 
-// Let vite-plugin-pwa handle activating the new service worker
+// Automatic service worker updates - no user prompt needed
 const updateSW = registerSW({
+  immediate: true, // Register SW immediately
   onNeedRefresh() {
-    if (confirm("A new version is ready. Refresh now?")) {
-      // 👇 this tells the waiting SW to activate and then reloads once
-      updateSW(true);
-    }
+    console.log("New version available! Updating automatically...");
+    // Automatically update without asking the user
+    updateSW(true);
   },
   onOfflineReady() {
     console.log("App is ready to work offline");
+  },
+  onRegistered(registration) {
+    console.log("Service Worker registered successfully");
+    // Check for updates every hour
+    if (registration) {
+      setInterval(() => {
+        console.log("Checking for updates...");
+        registration.update();
+      }, 60 * 60 * 1000); // Check every hour
+    }
+  },
+  onRegisterError(error) {
+    console.error("Service Worker registration failed:", error);
   },
 });
 
