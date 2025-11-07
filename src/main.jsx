@@ -6,22 +6,23 @@ import "./index.css";
 // PWA registration (vite-plugin-pwa)
 import { registerSW } from "virtual:pwa-register";
 
-// Register service worker with update handling
+// Let vite-plugin-pwa handle activating the new service worker
 const updateSW = registerSW({
   onNeedRefresh() {
     if (confirm("A new version is ready. Refresh now?")) {
-      updateSW(); // Call the updater function to activate new service worker
+      // 👇 this tells the waiting SW to activate and then reloads once
+      updateSW(true);
     }
   },
   onOfflineReady() {
     console.log("App is ready to work offline");
-  }
+  },
 });
 
 // Render the app
 createRoot(document.getElementById("root")).render(
-  // StrictMode can cause useEffects to run twice in development.
-  // Keep it disabled while building with timers/audio to prevent odd behavior.
+  // StrictMode can cause effects (like timers/audio) to run twice in dev.
+  // Keep it commented out for this small PWA so timing stays predictable.
   // <React.StrictMode>
     <App />
   // </React.StrictMode>
