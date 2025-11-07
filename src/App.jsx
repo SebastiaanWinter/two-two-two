@@ -88,6 +88,39 @@ const DEFAULT_STATEMENTS = [
   "Fear is data, not a decision.",
 ];
 
+const DEFAULT_REWRITES = [
+  {
+    id: 1,
+    current: "I never have enough time.",
+    r1: "I'm learning to prioritise what truly matters.",
+    r2: "There is enough time for the things that are aligned with me.",
+  },
+  {
+    id: 2,
+    current: "Money is always stressful for me.",
+    r1: "I'm getting better at managing and welcoming money.",
+    r2: "Money can be a calm, supportive partner in my life.",
+  },
+  {
+    id: 3,
+    current: "I'm not consistent enough to succeed.",
+    r1: "I'm discovering my own natural rhythm of consistency.",
+    r2: "Small, gentle steps still count and add up for me.",
+  },
+  {
+    id: 4,
+    current: "Other people are further ahead than I am.",
+    r1: "I'm on my own unique, perfectly-timed path.",
+    r2: "I can celebrate others and still trust my timing.",
+  },
+  {
+    id: 5,
+    current: "I’m afraid I’ll mess things up.",
+    r1: "I'm allowed to learn as I go.",
+    r2: "Every experience gives me more wisdom and clarity.",
+  },
+];
+
 const FUTURECAST_TEMPLATE = `Futurecasting 😎
 
 Your yummy vision: 4–6 bullet points
@@ -173,14 +206,13 @@ export default function App() {
   const [tempStatements, setTempStatements] = useState([]);
   const [newLine, setNewLine] = useState("");
 
-  /* --- rewrites --- */
+  /* --- rewrites (story + 2 rewrites) --- */
   const [rewrites, setRewrites] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(K.rewrites) || "[]");
-      return Array.isArray(saved) ? saved : [];
-    } catch {
-      return [];
-    }
+      if (Array.isArray(saved) && saved.length) return saved;
+    } catch {}
+    return DEFAULT_REWRITES;
   });
   const [editRewrites, setEditRewrites] = useState(false);
   const [tempRewrites, setTempRewrites] = useState([]);
@@ -370,43 +402,47 @@ export default function App() {
     setNewLine("");
   };
 
-  /* --- rewrites editor --- */
+  /* --- rewrites editor (max 15 stories, max 2 rewrites per story) --- */
   const openRewritesEditor = () => {
-    setTempRewrites(
-      rewrites.length
-        ? rewrites
+    setTempRewrites(rewrites);
+    setEditRewrites(true);
+  };
+
+  const addRewriteRow = () => {
+    setTempRewrites((list) =>
+      list.length >= 15
+        ? list
         : [
+            ...list,
             {
-              id: Date.now(),
-              from: "Old story: I'm always behind.",
-              to: "New story: I'm moving at my own aligned pace.",
+              id: Date.now() + Math.random(),
+              current: "",
+              r1: "",
+              r2: "",
             },
           ]
     );
-    setEditRewrites(true);
   };
-  const addRewriteRow = () => {
-    setTempRewrites((list) => [
-      ...list,
-      { id: Date.now() + Math.random(), from: "", to: "" },
-    ]);
-  };
+
   const updateRewriteField = (id, field, value) => {
     setTempRewrites((list) =>
       list.map((r) => (r.id === id ? { ...r, [field]: value } : r))
     );
   };
+
   const removeRewrite = (id) => {
     setTempRewrites((list) => list.filter((r) => r.id !== id));
   };
+
   const persistRewrites = () => {
     const cleaned = tempRewrites
       .map((r) => ({
         ...r,
-        from: (r.from || "").trim(),
-        to: (r.to || "").trim(),
+        current: (r.current || "").trim(),
+        r1: (r.r1 || "").trim(),
+        r2: (r.r2 || "").trim(),
       }))
-      .filter((r) => r.from.length || r.to.length);
+      .filter((r) => r.current || r.r1 || r.r2);
     setRewrites(cleaned);
     setEditRewrites(false);
   };
@@ -863,26 +899,41 @@ export default function App() {
                           padding: "10px 12px",
                         }}
                       >
-                        {r.from && (
+                        {r.current && (
                           <div
                             style={{
-                              fontSize: 12,
+                              fontSize: 13,
                               color: BRAND.sub,
                               marginBottom: 4,
+                              fontWeight: 500,
                             }}
                           >
-                            Old story: {r.from}
+                            Current story:
+                            <div style={{ color: BRAND.text }}>{r.current}</div>
                           </div>
                         )}
-                        {r.to && (
+                        {r.r1 && (
                           <div
                             style={{
-                              fontSize: 14,
-                              fontWeight: 600,
+                              fontSize: 13,
+                              marginTop: 4,
                               color: "#6F63F6",
                             }}
                           >
-                            New story: {r.to}
+                            Rewrite 1:
+                            <div style={{ color: "#3F35C0" }}>{r.r1}</div>
+                          </div>
+                        )}
+                        {r.r2 && (
+                          <div
+                            style={{
+                              fontSize: 13,
+                              marginTop: 4,
+                              color: "#6F63F6",
+                            }}
+                          >
+                            Rewrite 2:
+                            <div style={{ color: "#3F35C0" }}>{r.r2}</div>
                           </div>
                         )}
                       </div>
@@ -899,7 +950,7 @@ export default function App() {
                       color: BRAND.sub,
                     }}
                   >
-                    (Tap “Edit Rewrites” to capture old stories and lovingly
+                    (Tap “Add / Edit Rewrites” to capture old stories and
                     rewrite them into something that serves you.)
                   </div>
                 )}
@@ -919,8 +970,7 @@ export default function App() {
                     fontWeight: 700,
                   }}
                 >
-                  <Edit2 className="w-4 h-4" />{" "}
-                  {rewrites.length ? "Edit rewrites" : "Create rewrites"}
+                  <Edit2 className="w-4 h-4" /> Add / Edit Rewrites
                 </button>
               </div>
             )}
@@ -1131,7 +1181,10 @@ export default function App() {
                   </button>
                 </div>
               ))}
-              <button onClick={() => setTempStatements([...tempStatements, ""])} className="add-btn">
+              <button
+                onClick={() => setTempStatements([...tempStatements, ""])}
+                className="add-btn"
+              >
                 + Add new statement
               </button>
 
@@ -1191,12 +1244,12 @@ export default function App() {
                 }}
               >
                 <label style={{ fontSize: 12, color: BRAND.sub }}>
-                  Old story
+                  Current story
                 </label>
                 <textarea
-                  value={r.from}
+                  value={r.current || ""}
                   onChange={(e) =>
-                    updateRewriteField(r.id, "from", e.target.value)
+                    updateRewriteField(r.id, "current", e.target.value)
                   }
                   style={{
                     width: "100%",
@@ -1207,16 +1260,32 @@ export default function App() {
                   }}
                 />
                 <label style={{ fontSize: 12, color: BRAND.sub }}>
-                  New story
+                  Rewrite 1
                 </label>
                 <textarea
-                  value={r.to}
+                  value={r.r1 || ""}
                   onChange={(e) =>
-                    updateRewriteField(r.id, "to", e.target.value)
+                    updateRewriteField(r.id, "r1", e.target.value)
                   }
                   style={{
                     width: "100%",
-                    minHeight: 60,
+                    minHeight: 50,
+                    padding: 8,
+                    borderRadius: 8,
+                    border: `1px solid ${BRAND.border}`,
+                  }}
+                />
+                <label style={{ fontSize: 12, color: BRAND.sub }}>
+                  Rewrite 2 (optional)
+                </label>
+                <textarea
+                  value={r.r2 || ""}
+                  onChange={(e) =>
+                    updateRewriteField(r.id, "r2", e.target.value)
+                  }
+                  style={{
+                    width: "100%",
+                    minHeight: 50,
                     padding: 8,
                     borderRadius: 8,
                     border: `1px solid ${BRAND.border}`,
@@ -1243,17 +1312,20 @@ export default function App() {
 
             <button
               onClick={addRewriteRow}
+              disabled={tempRewrites.length >= 15}
               style={{
                 border: "none",
                 borderRadius: 9999,
                 padding: "8px 12px",
-                background: BRAND.coral,
+                background:
+                  tempRewrites.length >= 15 ? "#ddd" : BRAND.coral,
                 color: "#fff",
                 fontWeight: 600,
                 alignSelf: "flex-start",
+                opacity: tempRewrites.length >= 15 ? 0.7 : 1,
               }}
             >
-              + Add rewrite
+              + Add story ({tempRewrites.length}/15)
             </button>
           </div>
 
